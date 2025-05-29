@@ -45,6 +45,10 @@ GET /tasks → Lista las tareas
 
 POST /tasks → Crea una tarea
 
+PUT /tasks/:id → Actualiza una tarea
+
+DELETE /tasks/:id → Elimina una tarea
+
 WebSocket integrado en el mismo puerto
 
 ## 📂 Estructura básica
