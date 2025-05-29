@@ -27,7 +27,7 @@ cp .env.sample .env
 Luego edita el archivo .env:
 ```env
 PORT=3000
-STORAGE=./database.sqlite
+STORAGE=db.sqlite
 ```
 (Opcional) Crea la base de datos manualmente si se está usando SQLite puro:
 
