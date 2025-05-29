@@ -27,7 +27,7 @@ cp .env.sample .env
 Luego edita el archivo .env:
 ```env
 PORT=3000
-STORAGE=./database.sqlite
+STORAGE=db.sqlite
 ```
 (Opcional) Crea la base de datos manualmente si se está usando SQLite puro:
 
@@ -45,6 +45,10 @@ GET /tasks → Lista las tareas
 
 POST /tasks → Crea una tarea
 
+PUT /tasks/:id → Actualiza una tarea
+
+DELETE /tasks/:id → Elimina una tarea
+
 WebSocket integrado en el mismo puerto
 
 ## 📂 Estructura básica
@@ -55,6 +59,7 @@ src/
 │   ├── config.js
 │   └── io.js
 ├── task/
+│   ├── task.service.js
 │   ├── task.controller.js
 │   ├── task.router.js
 │   └── task.model.js
