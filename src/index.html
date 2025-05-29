@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-time To-Do List</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #4361ee;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --warning: #f72585;
+        --danger: #e63946;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --pending: #ffb703;
+        --completed: #2a9d8f;
+        --backlog: #8d99ae;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: var(--dark);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      h1 i {
+        color: var(--warning);
+      }
+
+      .add-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .add-btn:hover {
+        background: var(--secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(67, 97, 238, 0.25);
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+      }
+
+      .column {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--card-shadow);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .column-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .column-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .task-count {
+        background: rgba(0, 0, 0, 0.08);
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+      }
+
+      .pending .column-title {
+        color: var(--pending);
+      }
+
+      .completed .column-title {
+        color: var(--completed);
+      }
+
+      .backlog .column-title {
+        color: var(--backlog);
+      }
+
+      .tasks {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        flex: 1;
+        min-height: 100px;
+      }
+
+      .task-card {
+        background: white;
+        border-radius: 10px;
+        padding: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border-left: 4px solid var(--pending);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      }
+
+      .task-card.completed {
+        border-left-color: var(--completed);
+      }
+
+      .task-card.backlog {
+        border-left-color: var(--backlog);
+      }
+
+      .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .task-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+        color: var(--dark);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
+
+      .task-description {
+        color: #555;
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.5;
+      }
+
+      .task-description.expanded {
+        display: block;
+        -webkit-line-clamp: unset;
+      }
+
+      .task-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        font-size: 0.85rem;
+        color: #777;
+      }
+
+      .task-created {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 16px;
+      }
+
+      .status-btn,
+      .status-dropdown {
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .status-btn.pending {
+        background: rgba(255, 183, 3, 0.15);
+        color: #b27d00;
+      }
+
+      .status-btn.completed {
+        background: rgba(42, 157, 143, 0.15);
+        color: #1a6459;
+      }
+
+      .status-btn.backlog {
+        background: rgba(141, 153, 174, 0.15);
+        color: #535c6d;
+      }
+
+      .status-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .read-more {
+        color: var(--primary);
+        background: none;
+        border: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+        padding: 0;
+        margin-top: 5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .read-more:hover {
+        text-decoration: underline;
+      }
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: white;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+      }
+
+      .modal.active .modal-content {
+        transform: translateY(0);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-title {
+        font-size: 1.5rem;
+        color: var(--primary);
+      }
+
+      .close-modal {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #777;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #444;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .submit-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.3s ease;
+      }
+
+      .submit-btn:hover {
+        background: var(--secondary);
+      }
+
+      .websocket-status {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: white;
+        padding: 10px 15px;
+        border-radius: 30px;
+        box-shadow: var(--card-shadow);
+        font-size: 0.9rem;
+      }
+
+      .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ccc;
+      }
+
+      .status-indicator.connected {
+        background: var(--completed);
+      }
+
+      .status-indicator.disconnected {
+        background: var(--danger);
+      }
+
+      @media (max-width: 992px) {
+        .board {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1><i class="fas fa-tasks"></i> Real-time To-Do Board</h1>
+        <button class="add-btn" id="addTaskBtn">
+          <i class="fas fa-plus"></i> Add New Task
+        </button>
+      </header>
+
+      <div class="board">
+        <div class="column pending">
+          <div class="column-header">
+            <h2 class="column-title"><i class="fas fa-clock"></i> Pending</h2>
+            <span class="task-count" id="pending-count">0 tasks</span>
+          </div>
+          <div class="tasks" id="pending-tasks">
+            <!-- Pending tasks will be inserted here -->
+          </div>
+        </div>
+
+        <div class="column completed">
+          <div class="column-header">
+            <h2 class="column-title">
+              <i class="fas fa-check-circle"></i> Completed
+            </h2>
+            <span class="task-count" id="completed-count">0 tasks</span>
+          </div>
+          <div class="tasks" id="completed-tasks">
+            <!-- Completed tasks will be inserted here -->
+          </div>
+        </div>
+
+        <div class="column backlog">
+          <div class="column-header">
+            <h2 class="column-title"><i class="fas fa-archive"></i> Backlog</h2>
+            <span class="task-count" id="backlog-count">0 tasks</span>
+          </div>
+          <div class="tasks" id="backlog-tasks">
+            <!-- Backlog tasks will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal" id="addTaskModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Add New Task</h3>
+          <button class="close-modal" id="addCloseModal">&times;</button>
+        </div>
+        <form id="addTaskForm" onsubmit="handleCreateTask(event)">
+          <div class="form-group">
+            <label for="taskTitle">Title</label>
+            <input type="text" id="addTaskTitle" required />
+          </div>
+          <div class="form-group">
+            <label for="taskDescription">Description</label>
+            <textarea id="addTaskDescription"></textarea>
+          </div>
+          <button type="submit" class="submit-btn">Create Task</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal" id="editTaskModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Task</h3>
+          <button class="close-modal" id="editCloseModal">&times;</button>
+        </div>
+        <form id="editTaskForm" onsubmit="handleEditTask(event)">
+          <input type="hidden" id="editTaskId" />
+          <div class="form-group">
+            <label for="taskTitle">Title</label>
+            <input type="text" id="editTaskTitle" required />
+          </div>
+          <div class="form-group">
+            <label for="taskDescription">Description</label>
+            <textarea id="editTaskDescription"></textarea>
+          </div>
+          <button type="submit" class="submit-btn">Edit Task</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- WebSocket Status Indicator -->
+    <div class="websocket-status" id="wsStatus">
+      <div class="status-indicator" id="wsIndicator"></div>
+      <span id="wsStatusText">Connecting...</span>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Socket connection
+      const socket = io()
+
+      // DOM Elements
+      const addTaskBtn = document.getElementById("addTaskBtn")
+      const addTaskModal = document.getElementById("addTaskModal")
+      const addCloseModal = document.getElementById("addCloseModal")
+      const addTaskForm = document.getElementById("addTaskForm")
+
+      const editTaskModal = document.getElementById("editTaskModal")
+      const editCloseModal = document.getElementById("editCloseModal")
+      const editTaskForm = document.getElementById("editTaskForm")
+
+      const wsStatus = document.getElementById("wsStatusText")
+      const wsIndicator = document.getElementById("wsIndicator")
+
+      // Modal Handling
+      function openModal(modal) {
+        modal.classList.add("active")
+        document.body.style.overflow = "hidden"
+      }
+
+      function closeModal(modal) {
+        modal.classList.remove("active")
+        document.body.style.overflow = ""
+      }
+
+      addTaskBtn.addEventListener("click", () => {
+        openModal(addTaskModal)
+      })
+
+      addCloseModal.addEventListener("click", () => {
+        closeModal(addTaskModal)
+      })
+
+      editCloseModal.addEventListener("click", () => {
+        closeModal(editTaskModal)
+      })
+
+      // Add task to the board
+      function addTaskToBoard(task) {
+        const taskCard = createTaskCard(task)
+        const columnId = `${task.status}-tasks`
+        document.getElementById(columnId).appendChild(taskCard)
+        updateTaskCounts()
+      }
+
+      // Update existing task on the board
+      function updateTaskOnBoard(updatedTask) {
+        // Remove existing task card
+        const existingCard = document.querySelector(
+          `.task-card[data-id="${updatedTask.id}"]`
+        )
+        if (existingCard) {
+          existingCard.remove()
+        }
+
+        // Add updated task to new column
+        addTaskToBoard(updatedTask)
+      }
+
+      function renderTaskDescription(task, truncated) {
+        if (!task.description) return ""
+
+        const desc = truncated
+          ? task.description.substring(0, 100) + "..."
+          : task.description
+        const showBtn =
+          task.description.length > 100
+            ? `<button class="read-more">Read more <i class="fas fa-chevron-down"></i></button>`
+            : ""
+
+        return `<p class="task-description">${desc}</p>${showBtn}`
+      }
+
+      // Create task card element
+      function createTaskCard(task) {
+        const taskCard = document.createElement("div")
+        taskCard.className = `task-card ${task.status}`
+        taskCard.dataset.id = task.id
+
+        // Format createdAt date
+        const createdAt = new Date(task.createdAt)
+        const formattedDate = createdAt.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+
+        // Truncate description if needed
+        const isMoreThan100Chars =
+          task.description && task.description.length > 100
+        const truncatedDesc = renderTaskDescription(task, isMoreThan100Chars)
+
+        taskCard.innerHTML = `
+                <div class="task-header">
+                    <h3 class="task-title">${task.title}</h3>
+                    <div class="task-actions">
+                        <a class="edit-btn" data-task-id="${task.id}">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a class="delete-btn" data-task-id="${task.id}">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                ${
+                  task.description
+                    ? `
+                    <p class="task-description">${truncatedDesc}</p>
+                    ${
+                      task.description.length > 100
+                        ? `
+                        <button class="read-more">Read more <i class="fas fa-chevron-down"></i></button>
+                    `
+                        : ""
+                    }
+                `
+                    : ""
+                }
+                <div class="task-meta">
+                    <div class="task-created">
+                        <i class="far fa-calendar"></i> ${formattedDate}
+                    </div>
+                    <div class="task-dropdown">
+                        <select class="status-dropdown"
+                        onchange="handleStatusChange(this)"
+                        data-task-id="${task.id}">
+                            <option value="pending" class="status-btn pending" ${
+                              task.status === "pending" ? "selected" : ""
+                            }>Pending</option>
+                            <option value="completed" class="status-btn completed" ${
+                              task.status === "completed" ? "selected" : ""
+                            }>Completed</option>
+                            <option value="backlog" class="status-btn backlog" ${
+                              task.status === "backlog" ? "selected" : ""
+                            }>Backlog</option>
+                        </select>
+                    </div>
+                </div>
+            `
+
+        // Add read more functionality
+        const readMoreBtn = taskCard.querySelector(".read-more")
+        if (readMoreBtn) {
+          readMoreBtn.addEventListener("click", () => {
+            const description = taskCard.querySelector(".task-description")
+            description.classList.toggle("expanded")
+
+            if (description.classList.contains("expanded")) {
+              description.textContent = task.description
+              readMoreBtn.innerHTML =
+                'Read less <i class="fas fa-chevron-up"></i>'
+            } else {
+              description.textContent = truncatedDesc
+              readMoreBtn.innerHTML =
+                'Read more <i class="fas fa-chevron-down"></i>'
+            }
+          })
+        }
+
+        // Edit task
+        const editBtn = taskCard.querySelector(".edit-btn")
+        editBtn.addEventListener("click", () => {
+          openModal(editTaskModal)
+          editTaskModal.querySelector("#editTaskId").value = task.id
+          editTaskModal.querySelector("#editTaskTitle").value = task.title
+          editTaskModal.querySelector("#editTaskDescription").value =
+            task.description
+        })
+
+        // Delete task
+        const deleteBtn = taskCard.querySelector(".delete-btn")
+        deleteBtn.addEventListener("click", async () => {
+          if (confirm("¿Estás seguro de que quieres eliminar esta tarea?")) {
+            try {
+              await apiRequest(`/tasks/${task.id}`, "DELETE")
+              console.log("Tarea eliminada vía REST")
+            } catch (err) {
+              console.error("Error al eliminar tarea:", err)
+            }
+          }
+        })
+
+        return taskCard
+      }
+
+      // Update task counts in each column
+      function updateTaskCounts() {
+        const columns = ["pending", "completed", "backlog"]
+
+        columns.forEach((column) => {
+          const count = document.getElementById(`${column}-tasks`).children
+            .length
+          document.getElementById(
+            `${column}-count`
+          ).textContent = `${count} task${count !== 1 ? "s" : ""}`
+        })
+      }
+
+      async function handleStatusChange(selectElement) {
+        const newStatus = selectElement.value
+        const taskId = selectElement.dataset.taskId
+
+        try {
+          await apiRequest(`/tasks/${taskId}`, "PUT", { status: newStatus })
+          console.log("Tarea actualizada vía REST")
+        } catch (err) {
+          console.error("Error al actualizar tarea:", err)
+        }
+      }
+
+      async function handleCreateTask(event) {
+        event.preventDefault()
+        const title = document.getElementById("addTaskTitle").value
+        const description = document.getElementById("addTaskDescription").value
+        try {
+          await apiRequest("http://localhost:3001/tasks", "POST", {
+            title,
+            description,
+          })
+        } catch (error) {
+          console.error("Error creando tarea:", error)
+        }
+
+        addTaskForm.reset()
+        addTaskModal.classList.remove("active")
+        document.body.style.overflow = ""
+      }
+
+      async function handleEditTask(event) {
+        event.preventDefault()
+        const taskId = document.getElementById("editTaskId").value
+        const title = document.getElementById("editTaskTitle").value
+        const description = document.getElementById("editTaskDescription").value
+
+        try {
+          await apiRequest(`/tasks/${taskId}`, "PUT", { title, description })
+          console.log("Tarea actualizada vía REST")
+        } catch (err) {
+          console.error("Error al actualizar tarea:", err)
+        }
+
+        editTaskModal.classList.remove("active")
+        document.body.style.overflow = ""
+      }
+
+      // WebSocket Event Handlers
+      function setupSocketListeners() {
+        socket.on("connection", () => {
+          console.log("WebSocket connected")
+          wsStatus.textContent = "Connected"
+          wsIndicator.classList.add("connected")
+          wsIndicator.classList.remove("disconnected")
+        })
+
+        socket.on("disconnection", () => {
+          wsStatus.textContent = "Disconnected"
+          wsIndicator.classList.add("disconnected")
+          wsIndicator.classList.remove("connected")
+          setTimeout(() => location.reload(), 5000)
+        })
+
+        socket.on("task-created", addTaskToBoard)
+        socket.on("task-updated", updateTaskOnBoard)
+        socket.on("task-deleted", (task) => {
+          const card = document.querySelector(`[data-id="${task.id}"]`)
+          if (card) card.remove()
+          updateTaskCounts()
+        })
+      }
+
+      async function apiRequest(url, method = "GET", body = null) {
+        const options = {
+          method,
+          headers: { "Content-Type": "application/json" },
+        }
+
+        if (body) options.body = JSON.stringify(body)
+
+        const res = await fetch(url, options)
+        if (!res.ok) console.error(`Request failed: ${res.status}`)
+        return res.json().catch(() => null)
+      }
+
+      // Initialization
+      window.addEventListener("DOMContentLoaded", () => {
+        fetch("http://localhost:3001/tasks")
+          .then((res) => res.json())
+          .then((tasks) => {
+            // Add all tasks to board
+            tasks.forEach((task) => addTaskToBoard(task))
+            updateTaskCounts()
+            setupSocketListeners()
+          })
+      })
+    </script>
+  </body>
+</html>
